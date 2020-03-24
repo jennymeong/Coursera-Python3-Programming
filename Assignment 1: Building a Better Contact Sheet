@@ -1,0 +1,73 @@
+#JennyMyeong
+import PIL
+from PIL import Image
+from PIL import ImageDraw
+from PIL import ImageFont
+
+# read image and convert to RGB
+image=Image.open("readonly/msi_recruitment.gif").convert('RGB')
+inten_factor = [0.1, 0.5, 0.9]
+w = image.width
+h = image.height
+#bh is the height of the rectangule
+bh = 100
+
+#the font and the color of the text
+setFont = ImageFont.truetype('readonly/fanwood-webfont.ttf', 50)
+fillColor = "#ff0000"
+
+#check for the image pixel
+def check_original_pixel (image):
+    channels = image.split()
+    return channels
+
+#add a rectangle at the bottom of each photo
+def add_rect(images):
+    bottom = Image.new ('RGB', (w, bh), color = (0, 0, 0))
+    added = []
+    for img in images:
+        indiv_sheet = PIL.Image.new ('RGB', (w, h + bh))
+        indiv_sheet.paste (img, (0, 0))
+        indiv_sheet.paste (bottom, (0, h))
+        added.append(indiv_sheet)
+    return added
+
+#change the intensity of the three RGB channels
+def change_intensity (image):
+    images = []
+    pos = 0
+    for pos in range(3):
+        for i in inten_factor:
+            channel_lst = list(check_original_pixel (image))
+            channel_lst[pos] = channel_lst[pos].point(lambda x: i * x)
+            changed_img = Image.merge('RGB', channel_lst)
+            images.append(changed_img)
+        pos = pos + 1
+    return add_rect (images)
+
+#create a new sheet
+contact_sheet = PIL.Image.new(image.mode, (w * 3, (h + bh) * 3))
+
+#initialization
+x = 0
+y = 0
+ctx = 0
+cty = 0
+chan_num = range(len(check_original_pixel (image)))
+
+for img in change_intensity (image):
+    contact_sheet.paste(img, (x, y))
+    img_for_text = ImageDraw.Draw(contact_sheet)
+    img_for_text.text((x + 10, y + h + 10), "channel {} intensity {}".format(chan_num[cty], inten_factor[ctx]), font = setFont, fill=fillColor)
+    if x + w == contact_sheet.width:
+        ctx = 0
+        cty = cty + 1
+        x = 0
+        y = y + h + bh
+    else:
+        x = x + w
+        ctx = ctx + 1
+
+
+contact_sheet = contact_sheet.resize((int(contact_sheet.width/2),int(contact_sheet.height/2) ))
+display(contact_sheet)
